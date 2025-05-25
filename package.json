@@ -7,13 +7,17 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "@fastify/cookie": "^6.0.0",
+    "@fastify/formbody": "^7.4.0",
+    "@fastify/session": "^7.0.0",
+    "@fastify/static": "latest",
+    "@fastify/view": "^8.0.0",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
     "fastify": "^4.21.0",
     "handlebars": "^4.7.8",
     "sqlite": "^5.0.1",
-    "sqlite3": "^5.1.6",
-    "@fastify/view": "^8.0.0",
-    "@fastify/static": "^6.10.2",
-    "@fastify/formbody": "^7.4.0"
+    "sqlite3": "^5.1.6"
   },
   "engines": {
     "node": "14.x"

@@ -13,7 +13,7 @@
   <link rel="icon" href="https://glitch.com/favicon.ico" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <title>Hello SQLite: Logs</title>
+  <title>管理員頁面</title>
 
   <!-- Import the webpage's stylesheet -->
   <link rel="stylesheet" href="/style.css" />
@@ -25,77 +25,165 @@
     <div class="content" role="main">
 
       <!-- This is the start of content for our page -->
-      <h1>Logs</h1>
+      <h1>管理員頁面</h1>
       {{#if error}}
-      <p class="error">
+      <p class="error" style="color: red;">
         {{error}}
-      </p>
-      {{else}}
-
-      <!-- The server script returns the logs in an array -->
-      <p>
-        Each time you submit an option through the poll in the <a href="/">Home</a> page, the app will add it to the log. <em>Most recent records will be shown (max 20).</em>
-      </p>
-      <!-- Write out a table row for each entry in the log array showing choice and timestamp -->
-      {{#if optionHistory.length}}
-          <div>
-            <h2>Poll History</h2>
-            <table>
-              <tr>
-                <th>Option Name</th>
-                <th>Timestamp</th>
-              </tr>
-              {{#each optionHistory}}
-                <tr>
-                  <td>{{choice}}</td>
-                  <td>{{time}}</td>
-                </tr>
-              {{/each}}
-            </table>
-          </div>
-      {{else}}
-      <p class="error">
-        No records!
       </p>
       {{/if}}
 
-      <!-- The user can clear the logs if they first set up an admin key in the env -->
-      <form action="/reset" method="post">
-        <h2>
-          Clear vote history
-        </h2>
-        <p>
-          Clear the history only if you are absolutely sure! It cannot be undone.
-          <em>(Check the README for instructions on setting up your admin key.)</em>
-        </p>
-        <p>
-          Enter your admin key to confirm:
-        </p>
-        
-        <!-- Server returns a failed flag if the submitted key doesn't match -->
-        {{#if failed}}
-        <p class="error">
-          {{failed}}
-        </p>
-        {{/if}}
-        <input type="password" id="pass" name="key" required>
-        <button type="submit">Clear log history</button>
+      <h2>新增活動</h2>
+      <form id="addEventForm" action="/admin/events" method="POST">
+        <div>
+          <label for="eventName">活動名稱:</label>
+          <input type="text" id="eventName" name="name" required>
+        </div>
+        <div>
+          <label for="eventDate">日期:</label>
+          <input type="date" id="eventDate" name="date" required>
+        </div>
+        <div>
+          <label for="eventLocation">地點:</label>
+          <input type="text" id="eventLocation" name="location" required>
+        </div>
+        <div>
+          <label for="eventType">型態:</label>
+          <input type="text" id="eventType" name="type" required>
+        </div>
+
+        <h3>自訂欄位</h3>
+        <div id="customFieldsContainer">
+          <!-- Custom fields will be added here by JavaScript -->
+        </div>
+        <button type="button" id="addCustomField">新增自訂欄位</button>
+        <br><br>
+        <input type="hidden" name="custom_fields_schema_json" id="customFieldsSchemaJson">
+        <button type="submit">新增活動</button>
       </form>
+
+      <h2>活動列表</h2>
+      {{#if events.length}}
+      <table>
+        <thead>
+          <tr>
+            <th>名稱</th>
+            <th>日期</th>
+            <th>地點</th>
+            <th>型態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each events}}
+          <tr>
+            <td>{{this.name}}</td>
+            <td>{{this.date}}</td>
+            <td>{{this.location}}</td>
+            <td>{{this.type}}</td>
+            <td>
+              <a href="/admin/edit-event/{{this.id}}">編輯</a>
+              <form action="/admin/delete-event/{{this.id}}" method="POST" style="display:inline;">
+                <button type="submit">刪除</button>
+              </form>
+            </td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+      {{else}}
+      <p>目前沒有活動。</p>
+      {{/if}}
+
+      <h2>查看參與情況</h2>
+      {{#if allParticipants.length}}
+      <table>
+        <thead>
+          <tr>
+            <th>活動名稱</th>
+            <th>使用者名稱</th>
+            <th>參與狀態</th>
+            <th>自訂欄位值</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each allParticipants}}
+          <tr>
+            <td>{{this.event_name}}</td>
+            <td>{{this.participant_username}}</td>
+            <td>{{this.status}}</td>
+            <td>{{this.custom_field_values_json}}</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+      {{else}}
+      <p>目前沒有參與記錄。</p>
       {{/if}}
     </div>
   </div>
   <!-- The footer holds our remix button — you can use it for structure or cut it out ✂ -->
   <footer class="footer">
     <div class="links"></div>
-    <a href="/">Home</a>
+    <a href="/">首頁</a>
     <span class="divider">|</span>
-    <a href="/logs">Admin</a>
-    <a class="btn--remix" target="_top" href="https://glitch.com/edit/#!/remix/glitch-hello-sqlite">
-      <img src="https://cdn.glitch.com/605e2a51-d45f-4d87-a285-9410ad350515%2FLogo_Color.svg?v=1618199565140"
-        alt="" />
-      Remix on Glitch
-    </a>
+    <a href="/admin">管理員頁面</a>
   </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const addCustomFieldButton = document.getElementById('addCustomField');
+      const customFieldsContainer = document.getElementById('customFieldsContainer');
+      const addEventForm = document.getElementById('addEventForm');
+      const customFieldsSchemaJsonInput = document.getElementById('customFieldsSchemaJson');
+
+      let customFields = [];
+
+      addCustomFieldButton.addEventListener('click', () => {
+        const fieldIndex = customFields.length;
+        const fieldDiv = document.createElement('div');
+        fieldDiv.classList.add('custom-field-row');
+        fieldDiv.innerHTML = `
+          <label for="customFieldName${fieldIndex}">欄位名稱:</label>
+          <input type="text" id="customFieldName${fieldIndex}" class="custom-field-name" required>
+          <label for="customFieldType${fieldIndex}">欄位型態:</label>
+          <select id="customFieldType${fieldIndex}" class="custom-field-type">
+            <option value="string">字串</option>
+            <option value="integer">整數</option>
+          </select>
+          <button type="button" class="remove-custom-field">移除</button>
+        `;
+        customFieldsContainer.appendChild(fieldDiv);
+
+        const removeButton = fieldDiv.querySelector('.remove-custom-field');
+        removeButton.addEventListener('click', () => {
+          fieldDiv.remove();
+          updateCustomFieldsArray();
+        });
+
+        updateCustomFieldsArray();
+      });
+
+      addEventForm.addEventListener('submit', (event) => {
+        updateCustomFieldsArray();
+        customFieldsSchemaJsonInput.value = JSON.stringify(customFields);
+      });
+
+      function updateCustomFieldsArray() {
+        customFields = [];
+        const fieldRows = customFieldsContainer.querySelectorAll('.custom-field-row');
+        fieldRows.forEach(row => {
+          const nameInput = row.querySelector('.custom-field-name');
+          const typeSelect = row.querySelector('.custom-field-type');
+          if (nameInput && typeSelect) {
+            customFields.push({
+              name: nameInput.value,
+              type: typeSelect.value
+            });
+          }
+        });
+      }
+    });
+  </script>
 </body>
 
 </html>

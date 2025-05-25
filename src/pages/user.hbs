@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="https://glitch.com/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>使用者頁面</title>
+
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+  <div class="wrapper">
+    <div class="content" role="main">
+      <h1>使用者頁面</h1>
+      {{#if error}}
+      <p class="error" style="color: red;">
+        {{error}}
+      </p>
+      {{/if}}
+
+      <h2>活動列表</h2>
+      {{#if events.length}}
+      <table>
+        <thead>
+          <tr>
+            <th>名稱</th>
+            <th>日期</th>
+            <th>地點</th>
+            <th>型態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each events}}
+          <tr>
+            <td>{{this.name}}</td>
+            <td>{{this.date}}</td>
+            <td>{{this.location}}</td>
+            <td>{{this.type}}</td>
+            <td>
+              <form action="/user/participate-event/{{this.id}}" method="POST" style="display:inline;">
+                <button type="submit" name="status" value="參加">參加</button>
+                <button type="submit" name="status" value="不參加">不參加</button>
+              </form>
+            </td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+      {{else}}
+      <p>目前沒有活動。</p>
+      {{/if}}
+
+      <h2>我的參與情況</h2>
+      {{#if myParticipations.length}}
+      <table>
+        <thead>
+          <tr>
+            <th>活動名稱</th>
+            <th>參與狀態</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each myParticipations}}
+          <tr>
+            <td>{{this.eventName}}</td>
+            <td>{{this.status}}</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+      {{else}}
+      <p>目前沒有您的參與記錄。</p>
+      {{/if}}
+    </div>
+  </div>
+  <footer class="footer">
+    <div class="links"></div>
+    <a href="/">首頁</a>
+    <span class="divider">|</span>
+    <a href="/user">使用者頁面</a>
+  </footer>
+</body>
+
+</html>
